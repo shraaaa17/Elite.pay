@@ -63,3 +63,4 @@ export default function PaymentCard({ onSuccess }) {
     </motion.div>
   );
 }
+
