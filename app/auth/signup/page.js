@@ -99,129 +99,119 @@
 //   );
 // }
 
+// pages/auth/signup.jsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signupUser } from "@/lib/firebase";
+import { motion } from "framer-motion";
+import AnimatedBackground from "@/components/AnimatedBackground";
+import InputField from "@/components/InputField";
+
+// Correct Firebase function
+import { signupUser } from "../../../lib/firebase";
 
 export default function SignupPage() {
   const router = useRouter();
 
-  const [username, setUsername] = useState("");
-  const [email, setEmail]     = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  
-  const [error, setError] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const handleSubmit = async () => {
+    if (!email || !password || !confirmPassword) {
+      alert("Please fill all fields");
+      return;
+    }
 
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    setError("");
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    const username = email.split("@")[0];
+
     setLoading(true);
+    const res = await signupUser(email, password, username);
+    setLoading(false);
 
-    // -------------------------
-    // VALIDATION
-    // -------------------------
-    if (!username || !email || !password || !confirm) {
-      setError("Please fill all fields");
-      setLoading(false);
-      return;
+    if (res.success) {
+      // Auto-login successful → Go to dashboard
+      router.push("/dashboard");
+    } else {
+      alert(res.error || "Signup failed");
     }
-
-    if (password !== confirm) {
-      setError("Passwords do not match");
-      setLoading(false);
-      return;
-    }
-
-    // -------------------------
-    // FIREBASE SIGNUP
-    // -------------------------
-    const result = await signupUser(email, password, username);
-
-    if (!result.success) {
-      setError(result.error);
-      setLoading(false);
-      return;
-    }
-
-    // Signup success
-    router.push("/auth/login");
   };
 
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <AnimatedBackground />
 
-        <h1 className="text-3xl font-bold text-center mb-6">Create Account</h1>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md"
+      >
+        <div className="text-center mb-8">
+          <motion.h1
+            initial={{ y: -20 }}
+            animate={{ y: 0 }}
+            className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2"
+          >
+            Create Account
+          </motion.h1>
+          <p className="text-gray-400">Join Elite Pay today</p>
+        </div>
 
-        {error && <p className="mb-4 text-red-600 text-center font-medium">{error}</p>}
-
-        <form onSubmit={handleSignup} className="space-y-4">
-
-          <div>
-            <label className="text-sm font-medium">Username</label>
-            <input
-              className="w-full p-3 mt-1 border rounded-lg"
-              placeholder="John Doe"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium">Email</label>
-            <input
+        <div className="bg-slate-800/50 backdrop-blur-lg rounded-2xl border border-slate-700 p-8 shadow-xl">
+          <div className="space-y-6">
+            <InputField
+              label="Email"
               type="email"
-              className="w-full p-3 mt-1 border rounded-lg"
-              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
             />
-          </div>
 
-          <div>
-            <label className="text-sm font-medium">Password</label>
-            <input
+            <InputField
+              label="Password"
               type="password"
-              className="w-full p-3 mt-1 border rounded-lg"
-              placeholder="Min 6 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
             />
-          </div>
 
-          <div>
-            <label className="text-sm font-medium">Confirm Password</label>
-            <input
+            <InputField
+              label="Confirm Password"
               type="password"
-              className="w-full p-3 mt-1 border rounded-lg"
-              placeholder="Re-enter your password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="••••••••"
             />
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-purple-500/50 transition-all"
+            >
+              {loading ? "Creating account..." : "Sign Up"}
+            </motion.button>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg text-lg font-semibold"
-          >
-            {loading ? "Creating Account..." : "Sign Up"}
-          </button>
-
-        </form>
-
-        <p className="text-center mt-4 text-sm text-gray-600">
-          Already have an account?{" "}
-          <a href="/login" className="text-blue-600 font-medium">Login</a>
-        </p>
-
-      </div>
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => router.push("/auth/login")}
+              className="text-purple-400 hover:text-purple-300 transition-colors"
+            >
+              Already have an account? Login
+            </button>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
+
